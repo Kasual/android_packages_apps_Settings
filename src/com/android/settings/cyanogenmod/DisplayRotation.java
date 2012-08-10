@@ -38,17 +38,20 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
     private static final String TAG = "DisplayRotation";
 
     private static final String KEY_ACCELEROMETER = "accelerometer";
+    private static final String LOCKSCREEN_ROTATION = "lockscreen_rotation";
     private static final String ROTATION_0_PREF = "display_rotation_0";
     private static final String ROTATION_90_PREF = "display_rotation_90";
     private static final String ROTATION_180_PREF = "display_rotation_180";
     private static final String ROTATION_270_PREF = "display_rotation_270";
 
     private CheckBoxPreference mAccelerometer;
+    private CheckBoxPreference mLockscreenRotationPref;
     private CheckBoxPreference mRotation0Pref;
     private CheckBoxPreference mRotation90Pref;
     private CheckBoxPreference mRotation180Pref;
     private CheckBoxPreference mRotation270Pref;
 
+//    public static final int LOCKSCREEN_ROTATION = 0;
     public static final int ROTATION_0_MODE = 1;
     public static final int ROTATION_90_MODE = 2;
     public static final int ROTATION_180_MODE = 4;
@@ -60,6 +63,13 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
             updateAccelerometerRotationCheckbox();
         }
     };
+
+//    private ContentObserver mLockscreenRotationObserver = new ContentObserver(new Handler()) {
+//        @Override
+//        public void onChange(boolean selfChange) {
+//            updateLockscreenRotationCheckbox();
+//        }
+//    };
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,9 +85,11 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
         mAccelerometer = (CheckBoxPreference) findPreference(KEY_ACCELEROMETER);
         mAccelerometer.setPersistent(false);
 
+
         if (hasRotationLock) {
                 mAccelerometer.setEnabled(false);
         }
+        mLockscreenRotationPref = (CheckBoxPreference) prefSet.findPreference(LOCKSCREEN_ROTATION);
         mRotation0Pref = (CheckBoxPreference) prefSet.findPreference(ROTATION_0_PREF);
         mRotation90Pref = (CheckBoxPreference) prefSet.findPreference(ROTATION_90_PREF);
         mRotation180Pref = (CheckBoxPreference) prefSet.findPreference(ROTATION_180_PREF);
@@ -87,6 +99,7 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
                         Settings.System.ACCELEROMETER_ROTATION_ANGLES,
                         ROTATION_0_MODE|ROTATION_90_MODE|ROTATION_270_MODE);
 
+//        mLockscreenPref.setChecked(LOCKSCREEN_ROTATION != 0);
         mRotation0Pref.setChecked((mode & ROTATION_0_MODE) != 0);
         mRotation90Pref.setChecked((mode & ROTATION_90_MODE) != 0);
         mRotation180Pref.setChecked((mode & ROTATION_180_MODE) != 0);
@@ -101,6 +114,9 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
         getContentResolver().registerContentObserver(
                 Settings.System.getUriFor(Settings.System.ACCELEROMETER_ROTATION), true,
                 mAccelerometerRotationObserver);
+//        getContentResolver().registerContentObserver(
+//                Settings.System.getUriFor(Settings.System.LOCKSCREEN_ROTATION), true,
+//                mAccelerometerRotationObserver);
     }
 
     @Override
@@ -108,10 +124,12 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
         super.onPause();
 
         getContentResolver().unregisterContentObserver(mAccelerometerRotationObserver);
+//        getContentResolver().unregisterContentObserver(mLockscreenRotationObserver);
     }
 
     private void updateState() {
         updateAccelerometerRotationCheckbox();
+//        updateLockscreenRotationCheckbox();
     }
 
     private void updateAccelerometerRotationCheckbox() {
@@ -120,11 +138,18 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
                 Settings.System.ACCELEROMETER_ROTATION, 0) != 0);
     }
 
+//    private void updateLockscreenRotationCheckbox() {
+//        mLockscreenPref.setChecked(Settings.System.getInt(
+//                getContentResolver(),
+//                Settings.System.LOCKSCREEN_ROTATION, 0) != 0);
+//    }
+
     public boolean onPreferenceChange(Preference preference, Object newValue) {
         return false;
     }
 
     public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
+        boolean value;
 
         if (preference == mAccelerometer) {
             try {
@@ -157,6 +182,11 @@ public class DisplayRotation extends SettingsPreferenceFragment implements OnPre
             }
             Settings.System.putInt(getActivity().getApplicationContext().getContentResolver(),
                     Settings.System.ACCELEROMETER_ROTATION_ANGLES, mode);
+            return true;
+        } else if (preference == mLockscreenRotationPref) {
+            value = mLockscreenRotationPref.isChecked();
+            Settings.System.putInt(getActivity().getApplicationContext().getContentResolver(),
+                    Settings.System.LOCKSCREEN_ROTATION, value ? 1 : 0);
             return true;
         }
 
